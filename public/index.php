@@ -40,11 +40,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="alert error"><?php echo $error; ?></div>
         <?php endif; ?>
 
-        <form method="POST">
-            <input type="text" name="usuario" placeholder="Usuario" required>
-            <input type="password" name="password" placeholder="Contraseña" required>
-            <button type="submit">Entrar</button>
-        </form>
+        <div class="login-container">
+    <h2>Sistema de Aserradero</h2>
+    <p class="login-subtitle">Acceso administrativo</p>
+
+    <?php if ($error): ?>
+        <div class="alert error"><?php echo $error; ?></div>
+    <?php endif; ?>
+
+    <form method="POST">
+        <input type="text" name="usuario" placeholder="Usuario" required>
+        <input type="password" name="password" placeholder="Contraseña" required>
+        <button type="submit">Entrar al sistema</button>
+    </form>
+</div>
     </div>
 </body>
 </html>
