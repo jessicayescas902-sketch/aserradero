@@ -2,44 +2,90 @@
 include '../config/database.php';
 session_start();
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: entradas.php');
+    exit;
+}
+
+$fecha = trim($_POST['fecha'] ?? '');
+$folio = trim($_POST['folio'] ?? '');
+$proveedorId = filter_input(
+    INPUT_POST,
+    'proveedor_id',
+    FILTER_VALIDATE_INT
+);
+$cantidad = filter_input(
+    INPUT_POST,
+    'cantidad',
+    FILTER_VALIDATE_FLOAT
+);
+
+$errores = [];
+
+$fechaValida = DateTime::createFromFormat('Y-m-d', $fecha);
+
+if (!$fechaValida || $fechaValida->format('Y-m-d') !== $fecha) {
+    $errores[] = 'Selecciona una fecha válida.';
+}
+
+if ($folio === '') {
+    $errores[] = 'El folio es obligatorio.';
+}
+
+if (!$proveedorId || $proveedorId <= 0) {
+    $errores[] = 'Selecciona un proveedor válido.';
+}
+
+if ($cantidad === false || $cantidad === null || $cantidad <= 0) {
+    $errores[] = 'La cantidad debe ser mayor que cero.';
+}
+
+if ($errores) {
+    $_SESSION['error'] = implode(' ', $errores);
+    header('Location: entradas.php');
+    exit;
+}
+
 try {
-    $conexion->beginTransaction();
+    // Verificar que el proveedor existe.
+    $consultaProveedor = $conexion->prepare(
+        "SELECT id FROM proveedores WHERE id = :id"
+    );
 
-    $producto_id = $_POST['producto_id'];
-    $proveedor_id = $_POST['proveedor_id'];
-    $cantidad = $_POST['cantidad'];
-    $costo = $_POST['costo'];
-    $fecha = $_POST['fecha'];
-    $obs = $_POST['observaciones'];
-    $usuario_id = $_SESSION['id'];
-
-    // 🧾 insertar entrada
-    $sql = "INSERT INTO entradas 
-        (producto_id, proveedor_id, cantidad, costo, fecha, observaciones, usuario_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?)";
-
-    $stmt = $conexion->prepare($sql);
-    $stmt->execute([
-        $producto_id,
-        $proveedor_id,
-        $cantidad,
-        $costo,
-        $fecha,
-        $obs,
-        $usuario_id
+    $consultaProveedor->execute([
+        ':id' => $proveedorId
     ]);
 
-    // 📈 aumentar stock
-    $stmt = $conexion->prepare("UPDATE productos SET stock = stock + ? WHERE id = ?");
-    $stmt->execute([$cantidad, $producto_id]);
+    if (!$consultaProveedor->fetch()) {
+        throw new RuntimeException('El proveedor seleccionado no existe.');
+    }
 
-    $conexion->commit();
+    $consulta = $conexion->prepare(
+        "INSERT INTO entradas (
+            fecha,
+            folio,
+            proveedor_id,
+            cantidad
+        ) VALUES (
+            :fecha,
+            :folio,
+            :proveedor_id,
+            :cantidad
+        )"
+    );
 
-    header("Location: entradas.php?ok=1");
-    exit();
+    $consulta->execute([
+        ':fecha' => $fecha,
+        ':folio' => $folio,
+        ':proveedor_id' => $proveedorId,
+        ':cantidad' => number_format($cantidad, 3, '.', '')
+    ]);
 
-} catch (Exception $e) {
-    $conexion->rollBack();
-    echo "Error: " . $e->getMessage();
+    $_SESSION['mensaje'] = 'Entrada registrada correctamente.';
+} catch (Throwable $e) {
+    error_log('Error al guardar entrada: ' . $e->getMessage());
+    $_SESSION['error'] = 'No fue posible registrar la entrada.';
 }
-?>
+
+header('Location: entradas.php');
+exit;

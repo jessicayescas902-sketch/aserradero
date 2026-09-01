@@ -2,7 +2,7 @@
 $host = "localhost";
 $dbname = "aserradero_db";
 $username = "root";
-$password = "";
+$password = "root";
 
 try {
     $conexion = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
