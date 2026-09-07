@@ -3,45 +3,29 @@
 include '../config/database.php';
 session_start();
 
+function postDecimal($value): float
+{
+    $value = str_replace(',', '.', trim((string) $value));
+
+    if ($value === '' || !is_numeric($value)) {
+        throw new Exception('La cantidad debe ser numérica.');
+    }
+
+    return (float) $value;
+}
+
 try {
-
-    /*
-    |--------------------------------------------------------------------------
-    | Verificar usuario
-    |--------------------------------------------------------------------------
-    */
-
-    $usuario_id = $_SESSION['usuario_id']
-        ?? $_SESSION['id']
-        ?? null;
+    $usuario_id = $_SESSION['usuario_id'] ?? $_SESSION['id'] ?? null;
 
     if (!$usuario_id) {
         throw new Exception('Sesión de usuario no válida.');
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Datos generales
-    |--------------------------------------------------------------------------
-    */
-
-    $tipo = $_POST['tipo'] ?? null;
-    $fecha = $_POST['fecha'] ?? null;
+    $tipo = $_POST['tipo'] ?? '';
+    $fecha = $_POST['fecha'] ?? '';
     $observaciones = trim($_POST['observaciones'] ?? '');
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Validar tipo
-    |--------------------------------------------------------------------------
-    */
-
-    if (!in_array(
-        $tipo,
-        ['normal', 'remision_forestal'],
-        true
-    )) {
+    if (!in_array($tipo, ['normal', 'remision_forestal'], true)) {
         throw new Exception('Tipo de salida inválido.');
     }
 
@@ -49,691 +33,173 @@ try {
         throw new Exception('La fecha es obligatoria.');
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Datos específicos
-    |--------------------------------------------------------------------------
-    */
-
     $cliente_id = null;
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | NOTA NORMAL
-    |--------------------------------------------------------------------------
-    */
-
     if ($tipo === 'normal') {
+        $numero_nota = trim($_POST['numero_nota'] ?? '');
+        $nombre_cliente = trim($_POST['nombre_cliente'] ?? '');
+        $telefono = trim($_POST['telefono'] ?? '');
+        $direccion = trim($_POST['direccion'] ?? '');
+        $ciudad = trim($_POST['ciudad'] ?? '');
 
-        $numero_nota = trim(
-            $_POST['numero_nota'] ?? ''
-        );
-
-        $nombre_cliente = trim(
-            $_POST['nombre_cliente'] ?? ''
-        );
-
-        $telefono = trim(
-            $_POST['telefono'] ?? ''
-        );
-
-        $direccion = trim(
-            $_POST['direccion'] ?? ''
-        );
-
-        $ciudad = trim(
-            $_POST['ciudad'] ?? ''
-        );
-
-
-        if ($numero_nota === '') {
-            throw new Exception(
-                'El número de nota es obligatorio.'
-            );
+        if ($numero_nota === '' || $nombre_cliente === '') {
+            throw new Exception('El número de nota y el nombre del cliente son obligatorios.');
         }
 
+        $productos_id = $_POST['producto_id'] ?? [];
+        $cantidades = $_POST['cantidad'] ?? [];
 
-        if ($nombre_cliente === '') {
-            throw new Exception(
-                'El nombre del cliente es obligatorio.'
-            );
+        if (!is_array($productos_id) || !is_array($cantidades)
+            || count($productos_id) === 0 || count($productos_id) !== count($cantidades)) {
+            throw new Exception('Debe capturar al menos un producto válido.');
         }
+    } else {
+        $cliente_id = (int) ($_POST['cliente_id'] ?? 0);
+        $bloque_id = (int) ($_POST['bloque_reembarque_id'] ?? 0);
+        $folio_progresivo = trim($_POST['folio_progresivo'] ?? '');
+        $folio_autorizado = trim($_POST['folio_autorizado'] ?? '');
+        $fecha_vencimiento = $_POST['fecha_vencimiento'] ?? '';
+        $destinatario = trim($_POST['destinatario'] ?? '');
+        $domicilio_destino = trim($_POST['domicilio_destino'] ?? '');
+        $municipio = trim($_POST['municipio'] ?? '');
+        $entidad = trim($_POST['entidad'] ?? '');
+        $medio_transporte = trim($_POST['medio_transporte'] ?? '');
+        $marca_vehiculo = trim($_POST['marca_vehiculo'] ?? '');
+        $tipo_vehiculo = trim($_POST['tipo_vehiculo'] ?? '');
+        $placas = trim($_POST['placas'] ?? '');
+        $productos_id = [(int) ($_POST['producto_id_remision'] ?? 0)];
+        $cantidades = [postDecimal($_POST['cantidad_remision'] ?? '')];
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Productos de nota normal
-        |--------------------------------------------------------------------------
-        */
-
-        $productos_id =
-            $_POST['producto_id'] ?? [];
-
-        $cantidades =
-            $_POST['cantidad'] ?? [];
-
-
-        if (
-            !is_array($productos_id) ||
-            !is_array($cantidades)
-        ) {
-            throw new Exception(
-                'Datos de productos inválidos.'
-            );
+        if (!$cliente_id || !$bloque_id || $folio_progresivo === '' || $destinatario === '') {
+            throw new Exception('Cliente, bloque mensual, folio progresivo y destinatario son obligatorios.');
         }
-
-
-        if (count($productos_id) === 0) {
-            throw new Exception(
-                'Debe agregar al menos un producto.'
-            );
-        }
-
-
-        if (
-            count($productos_id) !==
-            count($cantidades)
-        ) {
-            throw new Exception(
-                'Los datos de los productos no coinciden.'
-            );
-        }
-
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | REMISIÓN FORESTAL
-    |--------------------------------------------------------------------------
-    */
-
-    else {
-
-        $cliente_id =
-            $_POST['cliente_id'] ?? null;
-
-        $folio_progresivo = trim(
-            $_POST['folio_progresivo'] ?? ''
-        );
-
-        $folio_autorizado = trim(
-            $_POST['folio_autorizado'] ?? ''
-        );
-
-        $fecha_vencimiento =
-            $_POST['fecha_vencimiento'] ?? null;
-
-        $destinatario = trim(
-            $_POST['destinatario'] ?? ''
-        );
-
-        $domicilio_destino = trim(
-            $_POST['domicilio_destino'] ?? ''
-        );
-
-        $municipio = trim(
-            $_POST['municipio'] ?? ''
-        );
-
-        $entidad = trim(
-            $_POST['entidad'] ?? ''
-        );
-
-        $medio_transporte = trim(
-            $_POST['medio_transporte'] ?? ''
-        );
-
-        $marca_vehiculo = trim(
-            $_POST['marca_vehiculo'] ?? ''
-        );
-
-        $tipo_vehiculo = trim(
-            $_POST['tipo_vehiculo'] ?? ''
-        );
-
-        $placas = trim(
-            $_POST['placas'] ?? ''
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Validaciones de remisión
-        |--------------------------------------------------------------------------
-        */
-
-        if (!$cliente_id) {
-            throw new Exception(
-                'Debe seleccionar un cliente.'
-            );
-        }
-
-
-        if ($folio_progresivo === '') {
-            throw new Exception(
-                'El folio progresivo es obligatorio.'
-            );
-        }
-
-
-        if ($destinatario === '') {
-            throw new Exception(
-                'El destinatario es obligatorio.'
-            );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Un solo producto para la remisión
-        |--------------------------------------------------------------------------
-        */
-
-        $producto_id =
-            $_POST['producto_id'] ?? null;
-
-        $cantidad =
-            $_POST['cantidad'] ?? null;
-
-
-        if (!$producto_id) {
-            throw new Exception(
-                'Debe seleccionar un producto.'
-            );
-        }
-
-
-        if (
-            $cantidad === null ||
-            $cantidad === ''
-        ) {
-            throw new Exception(
-                'La cantidad es obligatoria.'
-            );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Convertimos el producto único a arreglos
-        |
-        | Esto permite utilizar el mismo proceso de
-        | validación y actualización de stock.
-        |--------------------------------------------------------------------------
-        */
-
-        $productos_id = [
-            $producto_id
-        ];
-
-        $cantidades = [
-            $cantidad
-        ];
-
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Iniciar transacción
-    |--------------------------------------------------------------------------
-    */
 
     $conexion->beginTransaction();
 
+    // En remisión se bloquea el bloque mensual: éste es el saldo autoritativo.
+    if ($tipo === 'remision_forestal') {
+        $stmt = $conexion->prepare(
+            'SELECT id, saldo_actual, unidad_medida FROM bloques_reembarque WHERE id = ? AND activo = 1 FOR UPDATE'
+        );
+        $stmt->execute([$bloque_id]);
+        $bloque = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Variables para cálculo
-    |--------------------------------------------------------------------------
-    */
+        if (!$bloque) {
+            throw new Exception('El bloque mensual ya no existe o está inactivo.');
+        }
 
-    $total_general = 0;
+        $saldo_disponible = (float) $bloque['saldo_actual'];
 
+        $stmt = $conexion->prepare(
+            'SELECT 1 FROM remisiones_forestales WHERE bloque_reembarque_id = ? AND folio_progresivo = ? LIMIT 1'
+        );
+        $stmt->execute([$bloque_id, $folio_progresivo]);
+
+        if ($stmt->fetchColumn()) {
+            throw new Exception('Ese folio progresivo ya fue registrado en este bloque mensual.');
+        }
+    }
+
+    $total_general = 0.0;
     $detalles = [];
+    $stmtProducto = $conexion->prepare(
+        'SELECT id, nombre, unidad_medida, stock, precio FROM productos WHERE id = ? FOR UPDATE'
+    );
 
-    $descripcion_productos = [];
-
-    $volumen_total = 0;
-
-    $unidades = [];
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Procesar productos
-    |--------------------------------------------------------------------------
-    */
-
-    foreach (
-        $productos_id as $indice => $producto_id
-    ) {
-
+    foreach ($productos_id as $indice => $producto_id) {
         $producto_id = (int) $producto_id;
+        $cantidad = postDecimal($cantidades[$indice] ?? '');
 
-        $cantidad = (float) $cantidades[$indice];
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Validar producto
-        |--------------------------------------------------------------------------
-        */
-
-        if ($producto_id <= 0) {
-            throw new Exception(
-                'Producto inválido.'
-            );
+        if ($producto_id <= 0 || $cantidad <= 0) {
+            throw new Exception('Producto y cantidad deben ser válidos.');
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Validar cantidad
-        |--------------------------------------------------------------------------
-        */
-
-        if ($cantidad <= 0) {
-            throw new Exception(
-                'La cantidad debe ser mayor que cero.'
-            );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Consultar producto
-        |
-        | FOR UPDATE bloquea el registro durante
-        | la transacción para evitar problemas
-        | de stock.
-        |--------------------------------------------------------------------------
-        */
-
-        $stmt = $conexion->prepare("
-            SELECT
-                id,
-                nombre,
-                unidad_medida,
-                stock,
-                precio
-            FROM productos
-            WHERE id = ?
-            FOR UPDATE
-        ");
-
-        $stmt->execute([
-            $producto_id
-        ]);
-
-        $producto =
-            $stmt->fetch(PDO::FETCH_ASSOC);
-
+        $stmtProducto->execute([$producto_id]);
+        $producto = $stmtProducto->fetch(PDO::FETCH_ASSOC);
 
         if (!$producto) {
+            throw new Exception('El producto seleccionado no existe.');
+        }
+
+        if ($tipo === 'remision_forestal'
+            && strcasecmp(trim($producto['unidad_medida']), trim($bloque['unidad_medida'])) !== 0) {
             throw new Exception(
-                "El producto con ID {$producto_id} no existe."
+                "La unidad del producto ({$producto['unidad_medida']}) no coincide " .
+                "con la del bloque ({$bloque['unidad_medida']})."
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Verificar stock
-        |--------------------------------------------------------------------------
-        */
-
-        $stock =
-            (float) $producto['stock'];
-
-
-        if ($cantidad > $stock) {
-
-            throw new Exception(
-                "Stock insuficiente para {$producto['nombre']}. " .
-                "Disponible: {$producto['stock']} " .
-                "{$producto['unidad_medida']}."
-            );
+        if ($cantidad > (float) $producto['stock']) {
+            throw new Exception("Stock insuficiente para {$producto['nombre']}. Disponible: {$producto['stock']} {$producto['unidad_medida']}.");
         }
 
+        if ($tipo === 'remision_forestal') {
+            if ($cantidad > $saldo_disponible) {
+                throw new Exception("La cantidad amparada excede el saldo del bloque. Disponible: {$bloque['saldo_actual']} {$bloque['unidad_medida']}.");
+            }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Precio desde la base de datos
-        |
-        | NO confiamos en el precio enviado
-        | por JavaScript.
-        |--------------------------------------------------------------------------
-        */
+            $saldo_siguiente = round($saldo_disponible - $cantidad, 3);
+        }
 
-        $precio =
-            (float) $producto['precio'];
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Calcular importe
-        |--------------------------------------------------------------------------
-        */
-
-        $importe =
-            $cantidad * $precio;
-
-
+        $precio = (float) $producto['precio'];
+        $importe = $cantidad * $precio;
         $total_general += $importe;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Guardar detalle temporal
-        |--------------------------------------------------------------------------
-        */
-
-        $detalles[] = [
-            'producto_id' => $producto_id,
-            'cantidad' => $cantidad,
-            'precio' => $precio,
-            'total' => $importe
-        ];
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Información para remisión forestal
-        |--------------------------------------------------------------------------
-        */
-
-        $descripcion_productos[] =
-            $producto['nombre'];
-
-
-        $volumen_total += $cantidad;
-
-
-        $unidades[] =
-            $producto['unidad_medida'];
+        $detalles[] = compact('producto_id', 'cantidad', 'precio', 'importe', 'producto');
     }
 
+    $stmt = $conexion->prepare(
+        'INSERT INTO salidas (tipo, cliente_id, total, fecha, observaciones, usuario_id) VALUES (?, ?, ?, ?, ?, ?)'
+    );
+    $stmt->execute([$tipo, $cliente_id, $total_general, $fecha, $observaciones ?: null, $usuario_id]);
+    $salida_id = $conexion->lastInsertId();
 
-    /*
-    |--------------------------------------------------------------------------
-    | Insertar salida principal
-    |--------------------------------------------------------------------------
-    */
-
-    $stmt = $conexion->prepare("
-        INSERT INTO salidas
-        (
-            tipo,
-            cliente_id,
-            total,
-            fecha,
-            observaciones,
-            usuario_id
-        )
-        VALUES (?, ?, ?, ?, ?, ?)
-    ");
-
-
-    $stmt->execute([
-        $tipo,
-        $cliente_id,
-        $total_general,
-        $fecha,
-        $observaciones ?: null,
-        $usuario_id
-    ]);
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Obtener ID de la salida
-    |--------------------------------------------------------------------------
-    */
-
-    $salida_id =
-        $conexion->lastInsertId();
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Insertar detalles
-    |--------------------------------------------------------------------------
-    */
-
-    $stmtDetalle = $conexion->prepare("
-        INSERT INTO salida_detalles
-        (
-            salida_id,
-            producto_id,
-            cantidad,
-            precio,
-            total
-        )
-        VALUES (?, ?, ?, ?, ?)
-    ");
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Actualizar stock
-    |--------------------------------------------------------------------------
-    */
-
-    $stmtStock = $conexion->prepare("
-        UPDATE productos
-        SET stock = stock - ?
-        WHERE id = ?
-    ");
-
+    $stmtDetalle = $conexion->prepare(
+        'INSERT INTO salida_detalles (salida_id, producto_id, cantidad, precio, total) VALUES (?, ?, ?, ?, ?)'
+    );
+    $stmtStock = $conexion->prepare('UPDATE productos SET stock = stock - ? WHERE id = ?');
 
     foreach ($detalles as $detalle) {
-
-        /*
-        | Insertar detalle
-        */
-
-        $stmtDetalle->execute([
-            $salida_id,
-            $detalle['producto_id'],
-            $detalle['cantidad'],
-            $detalle['precio'],
-            $detalle['total']
-        ]);
-
-
-        /*
-        | Descontar stock
-        */
-
-        $stmtStock->execute([
-            $detalle['cantidad'],
-            $detalle['producto_id']
-        ]);
+        $stmtDetalle->execute([$salida_id, $detalle['producto_id'], $detalle['cantidad'], $detalle['precio'], $detalle['importe']]);
+        $stmtStock->execute([$detalle['cantidad'], $detalle['producto_id']]);
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Guardar documento específico
-    |--------------------------------------------------------------------------
-    */
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | NOTA NORMAL
-    |--------------------------------------------------------------------------
-    */
 
     if ($tipo === 'normal') {
-
-        $stmt = $conexion->prepare("
-            INSERT INTO notas_normales
-            (
-                salida_id,
-                numero_nota,
-                nombre_cliente,
-                direccion,
-                ciudad,
-                telefono
-            )
-            VALUES (?, ?, ?, ?, ?, ?)
-        ");
-
-
+        $stmt = $conexion->prepare(
+            'INSERT INTO notas_normales (salida_id, numero_nota, nombre_cliente, direccion, ciudad, telefono) VALUES (?, ?, ?, ?, ?, ?)'
+        );
+        $stmt->execute([$salida_id, $numero_nota, $nombre_cliente, $direccion ?: null, $ciudad ?: null, $telefono ?: null]);
+    } else {
+        $detalle = $detalles[0];
+        $stmt = $conexion->prepare(
+            'INSERT INTO remisiones_forestales
+            (salida_id, bloque_reembarque_id, folio_progresivo, folio_autorizado, fecha_expedicion,
+             fecha_vencimiento, destinatario, domicilio_destino, municipio, entidad,
+             descripcion_producto, volumen_amparado, saldo_anterior, saldo_siguiente,
+             unidad_medida, medio_transporte, marca_vehiculo, tipo_vehiculo, placas)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        );
         $stmt->execute([
-            $salida_id,
-            $numero_nota,
-            $nombre_cliente,
-            $direccion ?: null,
-            $ciudad ?: null,
-            $telefono ?: null
+            $salida_id, $bloque_id, $folio_progresivo, $folio_autorizado ?: null, $fecha,
+            $fecha_vencimiento ?: null, $destinatario, $domicilio_destino ?: null,
+            $municipio ?: null, $entidad ?: null, $detalle['producto']['nombre'],
+            $detalle['cantidad'], $saldo_disponible, $saldo_siguiente,
+            $detalle['producto']['unidad_medida'], $medio_transporte ?: null,
+            $marca_vehiculo ?: null, $tipo_vehiculo ?: null, $placas ?: null
         ]);
 
+        $stmt = $conexion->prepare('UPDATE bloques_reembarque SET saldo_actual = ? WHERE id = ?');
+        $stmt->execute([$saldo_siguiente, $bloque_id]);
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | REMISIÓN FORESTAL
-    |--------------------------------------------------------------------------
-    */
-
-    else {
-
-        /*
-        |--------------------------------------------------------------------------
-        | Como ahora solamente puede existir un producto,
-        | tomamos directamente el primer elemento.
-        |--------------------------------------------------------------------------
-        */
-
-        $descripcion_producto =
-            $descripcion_productos[0];
-
-
-        $unidad_medida =
-            $unidades[0];
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Volumen amparado
-        |--------------------------------------------------------------------------
-        */
-
-        $volumen_amparado =
-            $volumen_total;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Insertar remisión forestal
-        |--------------------------------------------------------------------------
-        */
-
-        $stmt = $conexion->prepare("
-            INSERT INTO remisiones_forestales
-            (
-                salida_id,
-                folio_progresivo,
-                folio_autorizado,
-                fecha_expedicion,
-                fecha_vencimiento,
-                destinatario,
-                domicilio_destino,
-                municipio,
-                entidad,
-                descripcion_producto,
-                volumen_amparado,
-                unidad_medida,
-                medio_transporte,
-                marca_vehiculo,
-                tipo_vehiculo,
-                placas
-            )
-            VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?
-            )
-        ");
-
-
-        $stmt->execute([
-            $salida_id,
-            $folio_progresivo,
-            $folio_autorizado ?: null,
-            $fecha,
-            $fecha_vencimiento ?: null,
-            $destinatario,
-            $domicilio_destino ?: null,
-            $municipio ?: null,
-            $entidad ?: null,
-            $descripcion_producto,
-            $volumen_amparado,
-            $unidad_medida,
-            $medio_transporte ?: null,
-            $marca_vehiculo ?: null,
-            $tipo_vehiculo ?: null,
-            $placas ?: null
-        ]);
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Confirmar transacción
-    |--------------------------------------------------------------------------
-    */
 
     $conexion->commit();
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Mensaje de éxito
-    |--------------------------------------------------------------------------
-    */
-
-    $_SESSION['mensaje'] =
-        'La salida se guardó correctamente.';
-
-
-    header('Location: salidas.php');
-
-    exit();
-
-
-} catch (Exception $e) {
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Cancelar transacción si existe
-    |--------------------------------------------------------------------------
-    */
-
-    if ($conexion->inTransaction()) {
+    $_SESSION['mensaje'] = 'La salida se guardó correctamente.';
+} catch (Throwable $e) {
+    if (isset($conexion) && $conexion->inTransaction()) {
         $conexion->rollBack();
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Guardar error
-    |--------------------------------------------------------------------------
-    */
-
-    $_SESSION['error'] =
-        $e->getMessage();
-
-
-    header('Location: salidas.php');
-
-    exit();
+    $_SESSION['error'] = $e->getMessage();
 }
-?>
+
+header('Location: salidas.php');
+exit();
