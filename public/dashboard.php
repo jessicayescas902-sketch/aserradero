@@ -35,7 +35,7 @@ require_once("../includes/auth.php");
         </div>
 
         <div class="col-md-4">
-            <a href="entradas.php" class="text-decoration-none">
+            <a href="tipo_madera.php" class="text-decoration-none">
                 <div class="card text-center shadow p-4">
                     <h5>Entradas</h5>
                 </div>
