@@ -21,7 +21,7 @@ function e($value): string
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Registrar salida</title>
+    <title>Salida de Encino</title>
 
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
@@ -48,16 +48,18 @@ function e($value): string
     <div class="card shadow">
 
         <div class="card-header bg-success text-white">
-            <h4 class="mb-0">Registro de salidas</h4>
+            <h4 class="mb-0">Registrar salida de Encino</h4>
         </div>
 
         <div class="card-body">
 
             <form action="guardar_salida.php" method="post">
 
+                <!-- Especie -->
+                <input type="hidden" name="especie" value="encino">
+
                 <div class="row g-3">
 
-                    <!-- Fecha -->
                     <div class="col-md-3">
                         <label for="fecha" class="form-label">
                             Fecha <span class="text-danger">*</span>
@@ -73,7 +75,6 @@ function e($value): string
                         >
                     </div>
 
-                    <!-- Folio -->
                     <div class="col-md-3">
                         <label for="folio" class="form-label">
                             Folio <span class="text-danger">*</span>
@@ -89,10 +90,10 @@ function e($value): string
                         >
                     </div>
 
-                    <!-- Destinatario -->
                     <div class="col-md-6">
                         <label for="destinatario" class="form-label">
-                            Destinatario o Código de Identificación <span class="text-danger">*</span>
+                            Destinatario o Código de Identificación
+                            <span class="text-danger">*</span>
                         </label>
 
                         <input
@@ -105,7 +106,6 @@ function e($value): string
                         >
                     </div>
 
-                    <!-- Cantidad -->
                     <div class="col-md-4">
                         <label for="cantidad" class="form-label">
                             Cantidad <span class="text-danger">*</span>
@@ -126,14 +126,17 @@ function e($value): string
 
                 <hr class="my-4">
 
-                <div class="d-flex justify-content-end gap-2">
+                <div class="d-flex justify-content-between">
 
-                    <a href="salidas.php" class="btn btn-secondary">
-                        Limpiar
+                    <a
+                        href="/aserradero/aserradero/public/dashboard.php"
+                        class="btn btn-secondary"
+                    >
+                        ← Dashboard
                     </a>
 
                     <button type="submit" class="btn btn-success">
-                        Guardar salida
+                        Guardar salida de Encino
                     </button>
 
                 </div>

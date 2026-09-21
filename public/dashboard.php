@@ -27,9 +27,9 @@ require_once("../includes/auth.php");
     <div class="row g-4">
 
         <div class="col-md-4">
-            <a href="productos.php" class="text-decoration-none">
+            <a href="clientes.php" class="text-decoration-none">
                 <div class="card text-center shadow p-4">
-                    <h5>Productos</h5>
+                    <h5>Clientes</h5>
                 </div>
             </a>
         </div>
@@ -43,7 +43,7 @@ require_once("../includes/auth.php");
         </div>
 
         <div class="col-md-4">
-            <a href="salidas.php" class="text-decoration-none">
+            <a href="tipo_salida.php" class="text-decoration-none">
                 <div class="card text-center shadow p-4">
                     <h5>Salidas</h5>
                 </div>

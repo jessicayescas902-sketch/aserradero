@@ -85,7 +85,7 @@ session_start();
 <div class="contenedor">
 
     <div class="titulo">
-        Registrar remisión forestal recibida
+        Registrar reembarque forestal 
     </div>
 
     <div class="contenido">
@@ -94,11 +94,11 @@ session_start();
 
         <div class="opciones">
 
-            <a href="entradas_pino.php" class="opcion">
+            <a href="salidas_pino.php" class="opcion">
                 🌲 Pino
             </a>
 
-            <a href="entradas_encino.php" class="opcion">
+            <a href="salidas_encino.php" class="opcion">
                 🌳 Encino
             </a>
 
