@@ -50,13 +50,6 @@ require_once("../includes/auth.php");
             </a>
         </div>
 
-        <div class="col-md-4">
-            <a href="existencias.php" class="text-decoration-none">
-                <div class="card text-center shadow p-4">
-                    <h5>Existencias</h5>
-                </div>
-            </a>
-        </div>
 
         <div class="col-md-4">
             <a href="proveedores.php" class="text-decoration-none">
